@@ -18,4 +18,19 @@ public class BestProcessingTime {
     private double preparationDuration;
     private DurationUnit durationUnit;
     private LocalDateTime updatedAt;
+
+    public BestProcessingTime(SalesPoint salesPoint, Dish dish, double preparationDuration, DurationUnit durationUnit) {
+        this.salesPoint = salesPoint;
+        this.dish = dish;
+        this.preparationDuration = preparationDuration;
+        this.durationUnit = durationUnit;
+    }
+
+    public String getSalesPointName() {
+        return this.salesPoint.getName();
+    }
+
+    public String getDishName() {
+        return this.dish.getName();
+    }
 }
