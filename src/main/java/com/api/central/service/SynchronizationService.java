@@ -9,20 +9,22 @@ import com.api.central.modele.AggregatedProcessingTime;
 import com.api.central.modele.AggregatedSales;
 import com.api.central.modele.DurationUnit;
 import com.api.central.modele.SalesPoint;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.sql.SQLException;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class SynchronizationService {
-    private RestTemplate restTemplate;
-    private SalesPointDAO salesPointDAO;
-    private AggregatedSalesDAO aggregatedSalesDAO;
-    private AggregatedProcessingTimeDAO aggregatedProcessingTimeDAO;
+    private final RestTemplate restTemplate;
+    private final SalesPointDAO salesPointDAO;
+    private final AggregatedSalesDAO aggregatedSalesDAO;
+    private final AggregatedProcessingTimeDAO aggregatedProcessingTimeDAO;
 
     public void synchronizeAll() throws SQLException {
         List<SalesPoint> salesPoints = salesPointDAO.findAll();
@@ -35,14 +37,17 @@ public class SynchronizationService {
     private void syncSales(SalesPoint sp) throws SQLException {
         String url = sp.getBaseUrl() + "/sales";
         ResponseEntity<SaleDTO[]> response = restTemplate.getForEntity(url, SaleDTO[].class);
+        System.out.println("→ Response from " + url + ": " + Arrays.toString(response.getBody()));
         SaleDTO[] sales = response.getBody();
 
         for (SaleDTO dto : sales) {
             AggregatedSales data = new AggregatedSales();
             data.setSalesPointName(sp.getName());
-            data.setDish(dto.getDish());
+            data.setDish(dto.getDishName());
             data.setQuantitySold(dto.getQuantitySold());
-            data.setTotalAmount(dto.getTotalAmount());
+            data.setTotalAmount(Optional.ofNullable(dto.getTotalAmount()).orElse(0.0));
+            data.setUpdatedAt(LocalDateTime.now());
+            System.out.println("→ Upserting aggregated sale: " + data.getSalesPointName() + ", dish=" + data.getDish());
             aggregatedSalesDAO.upsert(data);
         }
     }
