@@ -12,4 +12,8 @@ import lombok.Setter;
 public class Dish {
     private int id;
     private String name;
+
+    public Dish(String name) {
+        this.name = name;
+    }
 }

@@ -20,7 +20,8 @@ public class SalesPointDAO {
     }
 
     public List<SalesPoint> findAll() throws SQLException {
-        String query = "SELECT id, name, baseUrl FROM sales_point";
+
+        String query = "SELECT id, name, baseUrl FROM public.sales_point";
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {

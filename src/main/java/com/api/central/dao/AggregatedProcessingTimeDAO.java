@@ -22,9 +22,9 @@ public class AggregatedProcessingTimeDAO {
 
     public void upsert(AggregatedProcessingTime time) throws SQLException {
         String sql = """
-            INSERT INTO aggregated_processing_time 
+            INSERT INTO aggregated_processing_time
                 (sales_point_name, dish, average, minimum, maximum, unit, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?::duration_unit, ?)
             ON CONFLICT (sales_point_name, dish)
             DO UPDATE SET
                 average = EXCLUDED.average,

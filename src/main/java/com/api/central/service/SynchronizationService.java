@@ -1,18 +1,15 @@
 package com.api.central.service;
 
-import com.api.central.dao.AggregatedProcessingTimeDAO;
-import com.api.central.dao.AggregatedSalesDAO;
-import com.api.central.dao.SalesPointDAO;
+import com.api.central.dao.*;
 import com.api.central.dto.DishOrderDTO;
 import com.api.central.dto.SaleDTO;
-import com.api.central.modele.AggregatedProcessingTime;
-import com.api.central.modele.AggregatedSales;
-import com.api.central.modele.DurationUnit;
-import com.api.central.modele.SalesPoint;
+import com.api.central.modele.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -25,6 +22,9 @@ public class SynchronizationService {
     private final SalesPointDAO salesPointDAO;
     private final AggregatedSalesDAO aggregatedSalesDAO;
     private final AggregatedProcessingTimeDAO aggregatedProcessingTimeDAO;
+    private final BestProcessingTimeDAO bestProcessingTimeDAO;
+    private final BestSalesDAO bestSalesDAO;
+    private final DishDAO dishDAO;
 
     public void synchronizeAll() throws SQLException {
         List<SalesPoint> salesPoints = salesPointDAO.findAll();
@@ -41,14 +41,34 @@ public class SynchronizationService {
         SaleDTO[] sales = response.getBody();
 
         for (SaleDTO dto : sales) {
-            AggregatedSales data = new AggregatedSales();
-            data.setSalesPointName(sp.getName());
-            data.setDish(dto.getDishName());
-            data.setQuantitySold(dto.getQuantitySold());
-            data.setTotalAmount(Optional.ofNullable(dto.getTotalAmount()).orElse(0.0));
-            data.setUpdatedAt(LocalDateTime.now());
-            System.out.println("→ Upserting aggregated sale: " + data.getSalesPointName() + ", dish=" + data.getDish());
-            aggregatedSalesDAO.upsert(data);
+            try {
+
+                BigDecimal price = dishDAO.findPriceByDishName(dto.getDishName());
+
+                BigDecimal totalAmount = price.multiply(BigDecimal.valueOf(dto.getQuantitySold()));
+
+                AggregatedSales data = new AggregatedSales();
+                data.setSalesPointName(sp.getName());
+                data.setDish(dto.getDishName());
+                data.setQuantitySold(dto.getQuantitySold());
+                data.setTotalAmount(totalAmount.doubleValue());
+                data.setUpdatedAt(LocalDateTime.now());
+                System.out.println("→ Upserting aggregated sale: " + data.getSalesPointName() + ", dish=" + data.getDish());
+                aggregatedSalesDAO.upsert(data);
+
+                BestSales bestSales = new BestSales();
+                Dish dishEntity = dishDAO.findByName(dto.getDishName()); // juste id + name
+                bestSales.setSalesPoint(sp);
+                bestSales.setDish(dishEntity);
+                bestSales.setQuantitySold(dto.getQuantitySold());
+                bestSales.setTotalAmount(totalAmount);
+                bestSales.setUpdatedAt(LocalDateTime.now());
+
+                bestSalesDAO.upsert(bestSales);
+
+            } catch (SQLException e) {
+                System.err.println("Erreur lors de la récupération du prix pour " + dto.getDishName() + ": " + e.getMessage());
+            }
         }
     }
 
@@ -65,17 +85,29 @@ public class SynchronizationService {
         }
 
         for (Map.Entry<String, List<Long>> entry : dishToDurations.entrySet()) {
-            String dish = entry.getKey();
+            String dishName = entry.getKey();  // Nom du plat
             List<Long> durations = entry.getValue();
 
             AggregatedProcessingTime data = new AggregatedProcessingTime();
             data.setSalesPointName(sp.getName());
-            data.setDish(dish);
+            data.setDish(dishName);
             data.setAverage(durationAverage(durations));
             data.setMinimum(Collections.min(durations));
             data.setMaximum(Collections.max(durations));
             data.setUnit(DurationUnit.valueOf("SECONDS"));
+            data.setUpdatedAt(LocalDateTime.now());
             aggregatedProcessingTimeDAO.upsert(data);
+
+            Dish dishEntity = dishDAO.findByName(dishName);
+
+            BestProcessingTime bestProcessingTime = new BestProcessingTime();
+            bestProcessingTime.setSalesPoint(sp);
+            bestProcessingTime.setDish(dishEntity);
+            bestProcessingTime.setPreparationDuration(durationAverage(durations));
+            bestProcessingTime.setDurationUnit(DurationUnit.SECONDS);
+            bestProcessingTime.setUpdatedAt(LocalDateTime.now());
+
+            bestProcessingTimeDAO.save(bestProcessingTime);
         }
     }
 

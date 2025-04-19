@@ -3,6 +3,7 @@ package com.api.central.modele;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-@Service
+@Setter
 public class BestProcessingTime {
     private int id;
     private SalesPoint salesPoint;

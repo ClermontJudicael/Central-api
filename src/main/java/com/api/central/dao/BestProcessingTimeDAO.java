@@ -20,16 +20,11 @@ public class BestProcessingTimeDAO {
     private final DishDAO dishDAO;
 
     @Autowired
-    public BestProcessingTimeDAO(
-            DataSource dataSource,
-            SalesPointDAO salesPointDAO,
-            DishDAO dishDAO
-    ) {
+    public BestProcessingTimeDAO(DataSource dataSource, SalesPointDAO salesPointDAO, DishDAO dishDAO) {
         this.dataSource = dataSource;
         this.salesPointDAO = salesPointDAO;
         this.dishDAO = dishDAO;
     }
-
 
     public List<BestProcessingTime> findAll() throws SQLException {
         String query = "SELECT * FROM best_processing_time";
@@ -58,7 +53,7 @@ public class BestProcessingTimeDAO {
 
     public void save(BestProcessingTime bpt) throws SQLException {
         String query = "INSERT INTO best_processing_time (id, sales_point_id, dish_id, preparation_duration, duration_unit, updated_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?) " +
+                "VALUES (?, ?, ?, ?, ?::duration_unit, ?) " +
                 "ON CONFLICT (id) DO UPDATE SET " +
                 "sales_point_id = EXCLUDED.sales_point_id, " +
                 "dish_id = EXCLUDED.dish_id, " +
@@ -81,27 +76,28 @@ public class BestProcessingTimeDAO {
 
     public List<BestProcessingTime> findTopProcessingTimes(int dishId, int top, CalculationMode mode) throws SQLException {
         String aggregation = switch (mode) {
-            case AVERAGE -> "AVG(preparation_duration)";
-            case MINIMUM -> "MIN(preparation_duration)";
-            case MAXIMUM -> "MAX(preparation_duration)";
+            case AVERAGE -> "AVG(bpt.preparation_duration)";
+            case MINIMUM -> "MIN(bpt.preparation_duration)";
+            case MAXIMUM -> "MAX(bpt.preparation_duration)";
         };
 
         String query = """
-        SELECT sp.id AS sp_id, sp.name AS sp_name, sp.baseUrl as url,
-               d.id AS d_id, d.name AS d_name,
-               %s AS preparation_duration,
-               bpt.duration_unit
-        FROM best_processing_time bpt
-        JOIN sales_point sp ON bpt.sales_point_id = sp.id
-        JOIN dish d ON bpt.dish_id = d.id
-        WHERE bpt.dish_id = ?
-        GROUP BY sp.id, sp.name, sp.baseUrl, d.id, d.name, bpt.duration_unit
-        ORDER BY preparation_duration ASC
-        LIMIT ?
-    """.formatted(aggregation);
+            SELECT sp.id AS sp_id, sp.name AS sp_name, sp.baseUrl AS url,
+                   d.id AS d_id, d.name AS d_name,
+                   %s AS preparation_duration,
+                   bpt.duration_unit
+            FROM best_processing_time bpt
+            JOIN sales_point sp ON bpt.sales_point_id = sp.id
+            JOIN dish d ON bpt.dish_id = d.id
+            WHERE bpt.dish_id = ?
+            GROUP BY sp.id, sp.name, sp.baseUrl, d.id, d.name, bpt.duration_unit
+            ORDER BY preparation_duration ASC
+            LIMIT ?
+        """.formatted(aggregation);
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
+
             stmt.setInt(1, dishId);
             stmt.setInt(2, top);
 
@@ -122,7 +118,4 @@ public class BestProcessingTimeDAO {
             return results;
         }
     }
-
-
 }
-

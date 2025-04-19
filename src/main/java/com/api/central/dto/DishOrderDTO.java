@@ -1,5 +1,6 @@
 package com.api.central.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,9 +13,13 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class DishOrderDTO {
+
+    @JsonProperty("dishName")
     private String dish;
-    //start of the praparation (dish status IN_PREPARATION)
+
+    @JsonProperty("inPreparationDate")
     private LocalDateTime startTime;
-    // preparation finished (dish status FINISHED)
+
+    @JsonProperty("finishedDate")
     private LocalDateTime endTime;
 }

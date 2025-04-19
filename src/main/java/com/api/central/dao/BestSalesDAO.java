@@ -24,7 +24,6 @@ public class BestSalesDAO {
         this.dishDAO = dishDAO;
     }
 
-
     public List<BestSales> findAll() throws SQLException {
         String query = "SELECT * FROM best_sales";
         try (Connection conn = dataSource.getConnection();
@@ -50,26 +49,26 @@ public class BestSalesDAO {
         }
     }
 
-    public void save(BestSales bs) throws SQLException {
-        String query = "INSERT INTO best_sales (id, sales_point_id, dish_id, quantity_sold, total_amount, updated_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?) " +
-                "ON CONFLICT (id) DO UPDATE SET " +
-                "sales_point_id = EXCLUDED.sales_point_id, " +
-                "dish_id = EXCLUDED.dish_id, " +
-                "quantity_sold = EXCLUDED.quantity_sold, " +
-                "total_amount = EXCLUDED.total_amount, " +
-                "updated_at = EXCLUDED.updated_at";
+    public void upsert(BestSales bestSales) throws SQLException {
+        String sql = """
+    INSERT INTO best_sales (sales_point_id, dish_id, quantity_sold, total_amount, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT (sales_point_id, dish_id)
+    DO UPDATE SET
+        quantity_sold = EXCLUDED.quantity_sold,
+        total_amount = EXCLUDED.total_amount,
+        updated_at = EXCLUDED.updated_at;
+    """;
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-
-            stmt.setInt(1, bs.getId());
-            stmt.setInt(2, bs.getSalesPoint().getId());
-            stmt.setInt(3, bs.getDish().getId());
-            stmt.setLong(4, bs.getQuantitySold());
-            stmt.setBigDecimal(5, bs.getTotalAmount());
-            stmt.setTimestamp(6, Timestamp.valueOf(bs.getUpdatedAt()));
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, bestSales.getSalesPoint().getId());
+            stmt.setInt(2, bestSales.getDish().getId());
+            stmt.setLong(3, bestSales.getQuantitySold());
+            stmt.setBigDecimal(4, bestSales.getTotalAmount());
+            stmt.setTimestamp(5, Timestamp.valueOf(bestSales.getUpdatedAt()));
             stmt.executeUpdate();
         }
     }
+
 }

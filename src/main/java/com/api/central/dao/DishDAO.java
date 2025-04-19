@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,35 @@ public class DishDAO {
                 );
             }
             return null;
+        }
+    }
+
+    public Dish findByName(String name) throws SQLException {
+        String query = "SELECT id, name FROM dish WHERE name ILIKE ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, name);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new Dish(rs.getInt("id"), rs.getString("name"));
+            } else {
+                throw new SQLException("Dish not found with name: " + name);
+            }
+        }
+    }
+
+    public BigDecimal findPriceByDishName(String dishName) throws SQLException {
+        String query = "SELECT price FROM dish WHERE name ILIKE ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, dishName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBigDecimal("price");
+                } else {
+                    throw new SQLException("Dish not found: " + dishName);
+                }
+            }
         }
     }
 

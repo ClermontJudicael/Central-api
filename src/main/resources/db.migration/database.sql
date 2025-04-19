@@ -56,4 +56,13 @@ CREATE TABLE IF NOT EXISTS aggregated_processing_time (
     UNIQUE (sales_point_name, dish)
 );
 
+ALTER TABLE best_sales ADD CONSTRAINT unique_sales_dish UNIQUE (sales_point_id, dish_id);
 
+-- 1. Ajouter la colonne price
+ALTER TABLE dish
+ADD COLUMN price NUMERIC(10,2);
+
+-- 2. (Optionnel mais recommandé) Mettre un prix par défaut pour les anciens plats
+UPDATE dish
+SET price = 0.00
+WHERE price IS NULL;
