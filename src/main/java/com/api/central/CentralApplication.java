@@ -9,8 +9,7 @@ public class CentralApplication {
 	public static void main(String[] args) {
 
 		SpringApplication.run(CentralApplication.class, args);
-		CustomDataSource dataSource = new CustomDataSource();
-		dataSource.testConnection();
+
 	}
 
 }

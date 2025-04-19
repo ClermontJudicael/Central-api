@@ -1,26 +1,33 @@
 package com.api.central.dao;
 
-import com.api.central.CustomDataSource;
 import com.api.central.modele.BestSales;
 import com.api.central.modele.Dish;
 import com.api.central.modele.SalesPoint;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-@RequiredArgsConstructor
 public class BestSalesDAO {
-    private final CustomDataSource customDataSource;
+    private final DataSource dataSource;
     private final SalesPointDAO salesPointDAO;
     private final DishDAO dishDAO;
 
+    @Autowired
+    public BestSalesDAO(DataSource dataSource, SalesPointDAO salesPointDAO, DishDAO dishDAO) {
+        this.dataSource = dataSource;
+        this.salesPointDAO = salesPointDAO;
+        this.dishDAO = dishDAO;
+    }
+
+
     public List<BestSales> findAll() throws SQLException {
         String query = "SELECT * FROM best_sales";
-        try (Connection conn = customDataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -53,7 +60,7 @@ public class BestSalesDAO {
                 "total_amount = EXCLUDED.total_amount, " +
                 "updated_at = EXCLUDED.updated_at";
 
-        try (Connection conn = customDataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, bs.getId());

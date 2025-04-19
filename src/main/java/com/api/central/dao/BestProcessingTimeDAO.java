@@ -1,28 +1,39 @@
 package com.api.central.dao;
 
-import com.api.central.CustomDataSource;
 import com.api.central.modele.DurationUnit;
 import com.api.central.modele.SalesPoint;
 import com.api.central.modele.Dish;
 import com.api.central.modele.BestProcessingTime;
 import com.api.central.modele.CalculationMode;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-@RequiredArgsConstructor
 public class BestProcessingTimeDAO {
-    private final CustomDataSource customDataSource;
+    private final DataSource dataSource;
     private final SalesPointDAO salesPointDAO;
     private final DishDAO dishDAO;
 
+    @Autowired
+    public BestProcessingTimeDAO(
+            DataSource dataSource,
+            SalesPointDAO salesPointDAO,
+            DishDAO dishDAO
+    ) {
+        this.dataSource = dataSource;
+        this.salesPointDAO = salesPointDAO;
+        this.dishDAO = dishDAO;
+    }
+
+
     public List<BestProcessingTime> findAll() throws SQLException {
         String query = "SELECT * FROM best_processing_time";
-        try (Connection conn = customDataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -55,7 +66,7 @@ public class BestProcessingTimeDAO {
                 "duration_unit = EXCLUDED.duration_unit, " +
                 "updated_at = EXCLUDED.updated_at";
 
-        try (Connection conn = customDataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, bpt.getId());
@@ -89,7 +100,7 @@ public class BestProcessingTimeDAO {
         LIMIT ?
     """.formatted(aggregation);
 
-        try (Connection conn = customDataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, dishId);
             stmt.setInt(2, top);

@@ -1,22 +1,27 @@
 package com.api.central.dao;
 
-import com.api.central.CustomDataSource;
 import com.api.central.modele.SalesPoint;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-@RequiredArgsConstructor
 public class SalesPointDAO {
-    private final CustomDataSource customDataSource;
+    private final DataSource dataSource;
+
+    @Autowired
+    public SalesPointDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     public List<SalesPoint> findAll() throws SQLException {
         String query = "SELECT id, name, baseUrl FROM sales_point";
-        try (Connection conn = customDataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
@@ -35,7 +40,7 @@ public class SalesPointDAO {
 
     public SalesPoint findById(int id) throws SQLException {
         String query = "SELECT id, name, baseUrl FROM sales_point WHERE id = ?";
-        try (Connection conn = customDataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, id);
@@ -54,7 +59,7 @@ public class SalesPointDAO {
     public void save(SalesPoint sp) throws SQLException {
         String query = "INSERT INTO sales_point (id, name) VALUES (?, ?) " +
                 "ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name";
-        try (Connection conn = customDataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, sp.getId());

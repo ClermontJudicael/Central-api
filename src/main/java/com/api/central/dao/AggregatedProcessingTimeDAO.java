@@ -1,20 +1,24 @@
 package com.api.central.dao;
 
-import com.api.central.CustomDataSource;
 import com.api.central.modele.AggregatedProcessingTime;
 import com.api.central.modele.DurationUnit;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.List;
 import java.util.ArrayList;
 
-@RequiredArgsConstructor
 @Repository
 public class AggregatedProcessingTimeDAO {
 
-    private final CustomDataSource customDataSource;
+    private final DataSource dataSource;
+
+    @Autowired
+    public AggregatedProcessingTimeDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     public void upsert(AggregatedProcessingTime time) throws SQLException {
         String sql = """
@@ -30,8 +34,8 @@ public class AggregatedProcessingTimeDAO {
                 updated_at = EXCLUDED.updated_at
         """;
 
-        try (Connection connection = customDataSource.getConnection();
-                PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, time.getSalesPointName());
             stmt.setString(2, time.getDish());
             stmt.setDouble(3, time.getAverage());
@@ -47,8 +51,8 @@ public class AggregatedProcessingTimeDAO {
         String sql = "SELECT * FROM aggregated_processing_time";
         List<AggregatedProcessingTime> list = new ArrayList<>();
 
-        try (Connection connection = customDataSource.getConnection();
-                PreparedStatement stmt = connection.prepareStatement(sql);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 AggregatedProcessingTime time = new AggregatedProcessingTime();

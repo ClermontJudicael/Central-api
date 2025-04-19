@@ -1,18 +1,22 @@
 package com.api.central.dao;
 
-import com.api.central.CustomDataSource;
 import com.api.central.modele.AggregatedSales;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@RequiredArgsConstructor
 @Repository
 public class AggregatedSalesDAO {
-    private final CustomDataSource customDataSource;
+    private final DataSource dataSource;
+
+    @Autowired
+    public AggregatedSalesDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     public void upsert(AggregatedSales sales) throws SQLException {
         String sql = """
@@ -25,8 +29,8 @@ public class AggregatedSalesDAO {
                 updated_at = EXCLUDED.updated_at
         """;
 
-        try (Connection connection = customDataSource.getConnection();
-                PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, sales.getSalesPointName());
             stmt.setString(2, sales.getDish());
             stmt.setLong(3, sales.getQuantitySold());
@@ -40,8 +44,8 @@ public class AggregatedSalesDAO {
         String sql = "SELECT * FROM aggregated_sales";
         List<AggregatedSales> list = new ArrayList<>();
 
-        try (Connection connection = customDataSource.getConnection();
-                PreparedStatement stmt = connection.prepareStatement(sql);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 AggregatedSales sales = new AggregatedSales();
