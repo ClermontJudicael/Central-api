@@ -4,7 +4,8 @@ CREATE TYPE duration_unit AS ENUM ('SECONDS', 'MINUTES', 'HOUR');
 -- Table des points de vente (ex : Analamahintsy, Antanimena)
 CREATE TABLE sales_point (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE
+    name VARCHAR(100) NOT NULL UNIQUE,
+    baseUrl VARCHAR(100) NOT NULL UNIQUE
 );
 
 -- Table des plats (identifiants propres au siège)
@@ -32,3 +33,27 @@ CREATE TABLE best_processing_time (
     duration_unit duration_unit NOT NULL DEFAULT 'SECONDS',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS aggregated_sales (
+    id SERIAL PRIMARY KEY,
+    sales_point_name VARCHAR(255) NOT NULL,
+    dish VARCHAR(255) NOT NULL,
+    quantity_sold BIGINT NOT NULL,
+    total_amount NUMERIC(10, 2) NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    UNIQUE (sales_point_name, dish)
+);
+
+CREATE TABLE IF NOT EXISTS aggregated_processing_time (
+    id SERIAL PRIMARY KEY,
+    sales_point_name VARCHAR(255) NOT NULL,
+    dish VARCHAR(255) NOT NULL,
+    average DOUBLE PRECISION NOT NULL,
+    minimum BIGINT NOT NULL,
+    maximum BIGINT NOT NULL,
+    unit duration_unit NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    UNIQUE (sales_point_name, dish)
+);
+
+
