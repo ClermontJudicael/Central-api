@@ -12,4 +12,5 @@ import lombok.Setter;
 public class SalesPoint {
     private int id;
     private String name;
+    private String baseUrl;
 }

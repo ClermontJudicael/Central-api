@@ -15,7 +15,7 @@ public class SalesPointDAO {
     private final CustomDataSource customDataSource;
 
     public List<SalesPoint> findAll() throws SQLException {
-        String query = "SELECT id, name FROM sales_point";
+        String query = "SELECT id, name, baseUrl FROM sales_point";
         try (Connection conn = customDataSource.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
@@ -24,7 +24,8 @@ public class SalesPointDAO {
             while (rs.next()) {
                 SalesPoint sp = new SalesPoint(
                         rs.getInt("id"),
-                        rs.getString("name")
+                        rs.getString("name"),
+                        rs.getString("baseUrl")
                 );
                 list.add(sp);
             }
@@ -33,7 +34,7 @@ public class SalesPointDAO {
     }
 
     public SalesPoint findById(int id) throws SQLException {
-        String query = "SELECT id, name FROM sales_point WHERE id = ?";
+        String query = "SELECT id, name, baseUrl FROM sales_point WHERE id = ?";
         try (Connection conn = customDataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -42,7 +43,8 @@ public class SalesPointDAO {
             if (rs.next()) {
                 return new SalesPoint(
                         rs.getInt("id"),
-                        rs.getString("name")
+                        rs.getString("name"),
+                        rs.getString("baseUrl")
                 );
             }
             return null;

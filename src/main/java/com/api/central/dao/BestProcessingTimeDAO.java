@@ -76,7 +76,7 @@ public class BestProcessingTimeDAO {
         };
 
         String query = """
-        SELECT sp.id AS sp_id, sp.name AS sp_name,
+        SELECT sp.id AS sp_id, sp.name AS sp_name, sp.baseUrl as url,
                d.id AS d_id, d.name AS d_name,
                %s AS preparation_duration,
                bpt.duration_unit
@@ -84,7 +84,7 @@ public class BestProcessingTimeDAO {
         JOIN sales_point sp ON bpt.sales_point_id = sp.id
         JOIN dish d ON bpt.dish_id = d.id
         WHERE bpt.dish_id = ?
-        GROUP BY sp.id, sp.name, d.id, d.name, bpt.duration_unit
+        GROUP BY sp.id, sp.name, sp.baseUrl, d.id, d.name, bpt.duration_unit
         ORDER BY preparation_duration ASC
         LIMIT ?
     """.formatted(aggregation);
@@ -97,7 +97,7 @@ public class BestProcessingTimeDAO {
             ResultSet rs = stmt.executeQuery();
             List<BestProcessingTime> results = new ArrayList<>();
             while (rs.next()) {
-                SalesPoint sp = new SalesPoint(rs.getInt("sp_id"), rs.getString("sp_name"));
+                SalesPoint sp = new SalesPoint(rs.getInt("sp_id"), rs.getString("sp_name"), rs.getString("url"));
                 Dish dish = new Dish(rs.getInt("d_id"), rs.getString("d_name"));
 
                 BestProcessingTime entry = new BestProcessingTime(
