@@ -68,4 +68,23 @@ public class SalesPointDAO {
             stmt.executeUpdate();
         }
     }
+
+    public SalesPoint findByName(String name) throws SQLException {
+        String query = "SELECT id, name, baseUrl FROM sales_point WHERE name = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, name);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new SalesPoint(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("baseUrl")
+                );
+            }
+            return null;
+        }
+    }
+
 }

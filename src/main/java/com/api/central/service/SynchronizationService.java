@@ -107,7 +107,12 @@ public class SynchronizationService {
             bestProcessingTime.setDurationUnit(DurationUnit.SECONDS);
             bestProcessingTime.setUpdatedAt(LocalDateTime.now());
 
-            bestProcessingTimeDAO.save(bestProcessingTime);
+            BestProcessingTime existing = bestProcessingTimeDAO.findBySalesPointAndDish(sp.getId(), dishEntity.getId());
+            if (existing != null) {
+                bestProcessingTimeDAO.update(bestProcessingTime);
+            } else {
+                bestProcessingTimeDAO.save(bestProcessingTime);
+            }
         }
     }
 

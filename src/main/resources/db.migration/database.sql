@@ -66,3 +66,4 @@ ADD COLUMN price NUMERIC(10,2);
 UPDATE dish
 SET price = 0.00
 WHERE price IS NULL;
+ALTER TABLE best_processing_time ADD CONSTRAINT unique_processing_time UNIQUE (sales_point_id, dish_id);
